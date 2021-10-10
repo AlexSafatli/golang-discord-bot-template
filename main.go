@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/AlexSafatli/golang-discord-bot-template/bot"
 	"math/rand"
 	"os/signal"
 	"syscall"
@@ -12,6 +11,7 @@ import (
 
 	"os"
 
+	"github.com/AlexSafatli/golang-discord-bot-template/bot"
 	"github.com/AlexSafatli/golang-discord-bot-template/config"
 )
 
