@@ -1,17 +1,17 @@
-package commands
+package bot
 
 import (
-	"log"
+	"github.com/AlexSafatli/golang-discord-bot-template/chat"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 // AboutMessageCommand takes a created message and returns an About embed message
 func AboutMessageCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
-	log.Printf("About handler running for message from %s", m.Author.Username)
+	chat.SendRawEmbedMessage(s, m.ChannelID, chat.GetRawAboutEmbedMessage(s))
 }
 
 // AboutSlashCommand returns an About embed message for a slash command
 func AboutSlashCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	log.Printf("About handler running for message from %s", i.Member.User.Username)
+	chat.SendInteractionRawEmbedForAction(s, i, chat.GetRawAboutEmbedMessage(s), nil)
 }

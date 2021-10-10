@@ -1,12 +1,9 @@
 package chat
 
 import (
-	"fmt"
-	"log"
-	"regexp"
-
-	"github.com/AlexSafatli/DiscordSwissArmyKnife/rpg"
 	"github.com/bwmarrin/discordgo"
+	"log"
+	"time"
 )
 
 const (
@@ -32,23 +29,9 @@ const (
 	discordColorDarkGrey   = 9936031
 	discordColorLightGrey  = 12370112
 	discordColorDarkNavy   = 2899536
+
+	botMessageSearchLimit = 50
 )
-
-var dieStrMatcher = regexp.MustCompile(`(\[\[[^\[^\]]*]])`)
-
-// DiceRollHandler returns dice roll results if a message matches a `[[...]]` pattern
-func DiceRollHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if dieStrMatcher.MatchString(m.Content) {
-		log.Printf("Found dice roll(s) to handle in %s", m.Content)
-		matches := dieStrMatcher.FindAllString(m.Content, -1)
-		for _, match := range matches {
-			dieStr := match[2 : len(match)-2]
-			msgToSend := fmt.Sprintf("**%d** ([`%s`]) *was rolled by* %s", rpg.Roll(dieStr), dieStr, m.Author.Username)
-			_ = SendEmbedMessage(s, m.ChannelID, fmt.Sprintf("%s Rolled Dice", m.Author.Username), msgToSend, nil)
-		}
-		DeleteReceivedMessage(s, m)
-	}
-}
 
 // DeleteReceivedMessage takes a created message and deletes it if it is not private
 func DeleteReceivedMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -58,4 +41,41 @@ func DeleteReceivedMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 			log.Printf("Could not delete message from %s", m.Author.Username)
 		}
 	}
+}
+
+// DeleteBotMessages deletes all bot messages found in the given channel
+func DeleteBotMessages(s *discordgo.Session, channelID, aroundID string) {
+	msgs, err := s.ChannelMessages(channelID, botMessageSearchLimit, "", "", aroundID)
+	if err != nil {
+		log.Printf("Could not find bot messages around message ID %s in channel %s", aroundID, channelID)
+		return
+	}
+	var botMessageIDs []string
+	for _, m := range msgs {
+		if m.Author.ID == s.State.User.ID {
+			botMessageIDs = append(botMessageIDs, m.ID)
+		}
+	}
+	if len(botMessageIDs) > 0 {
+		if err = s.ChannelMessagesBulkDelete(channelID, botMessageIDs); err != nil {
+			log.Printf("Could not bulk delete all found %d bot messages in channel %s => %s", len(botMessageIDs), channelID, err)
+		}
+	}
+}
+
+// SendSimpleMessageResponseForAction sends a response for a message command with no fields
+func SendSimpleMessageResponseForAction(s *discordgo.Session, channelID, title, payload string, err error) {
+	SendMessageResponseForAction(s, channelID, title, payload, map[string]string{}, err)
+}
+
+// SendMessageResponseForAction sends a response for a message command
+func SendMessageResponseForAction(s *discordgo.Session, channelID, title, payload string, fields map[string]string, err error) {
+	var msg *discordgo.Message
+	if err != nil {
+		msg = SendErrorEmbedMessage(s, channelID, title, err)
+	} else {
+		msg = SendEmbedMessage(s, channelID, title, payload, fields)
+	}
+	time.Sleep(time.Second * 10)
+	_ = s.ChannelMessageDelete(channelID, msg.ID)
 }
