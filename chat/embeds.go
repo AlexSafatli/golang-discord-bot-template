@@ -16,7 +16,7 @@ func makeEmbed(title string, description string, fields map[string]string) *disc
 		}
 	}
 	embed.Footer = &discordgo.MessageEmbedFooter{
-		Text: version.Version.Name + " " + version.Version.Version + Separator + version.Version.Developer,
+		Text: version.Version.Name + " " + version.Version.Version + "+" + version.Version.GitCommit[:8] + Separator + version.Version.Developer,
 	}
 	return embed
 }
@@ -83,7 +83,7 @@ func GetRawAboutEmbedMessage(s *discordgo.Session) *discordgo.MessageEmbed {
 	var desc = fmt.Sprintf("I am a bot created by %s.", version.Version.Developer)
 	e := makeEmbed("My Name Is "+version.Version.Name, desc, map[string]string{
 		"Usage":             "Most of my commands are located in slash commands (start typing with a `/` to see them). Some older commands are still found with the `.` prefix such as `.entrance`.",
-		RandomString(Whats): "I play sounds and automate things.",
+		RandomString(Whats): "I do things.",
 	})
 	e.Thumbnail = &discordgo.MessageEmbedThumbnail{
 		URL: s.State.User.AvatarURL("2048"),
